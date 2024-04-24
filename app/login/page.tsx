@@ -3,12 +3,39 @@ import { headers } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { SubmitButton } from "./submit-button";
+import {GButton} from "./google-button";
 
 export default function Login({
   searchParams,
 }: {
   searchParams: { message: string };
 }) {
+  const signInWithGoogle = async () => {
+    "use server";
+
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+          redirect_to: `http://localhost:3000/auth/callback`,
+        },
+      },
+    })
+
+    console.log(error)
+
+    if (error) {
+      return redirect("/login?message=Could not authenticate user");
+    }
+
+    console.log(data)
+
+    return redirect(data.url);
+  }
+
   const signIn = async (formData: FormData) => {
     "use server";
 
@@ -108,6 +135,9 @@ export default function Login({
         >
           Sign Up
         </SubmitButton>
+        <GButton 
+          onClick={signInWithGoogle}
+        />
         {searchParams?.message && (
           <p className="mt-4 p-4 bg-foreground/10 text-foreground text-center">
             {searchParams.message}
