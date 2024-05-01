@@ -59,7 +59,7 @@ Before you begin, make sure you have the following installed:
 - Click the login button to authenticate with Google using Supabase.
 - Once authenticated, you will be redirected to the home page and show authenticated components
 
-![Logged page](<imgs/Screenshot 2024-05-01 at 21.21.03.png>)
+<video src="readme-content/todo-list-supabase-next.mp4" controls title="Title"></video>
 
 ## Contributing
 
