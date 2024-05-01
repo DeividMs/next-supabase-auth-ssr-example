@@ -14,32 +14,71 @@
  * 
  * 
  */
+"use client";
 
-import { Checkbox } from "@/components/ui/checkbox"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { createClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { useState } from "react";
+import { Todo } from "@/types/todo";
+import { TodoItem } from "./TodoItem";
 
-export default async function TodoList() {
+export default function TodoList({ todos }: { todos: Todo[] }) {
+  const [todosState, setTodosState] = useState<Todo[]>(todos);
+  const [inputValue, setInputValue] = useState("")
   const supabase = createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this todo?") === false) {
+      return;
+    }
+    const { error } = await supabase.from("todos").delete().eq("id", id);
 
-  if (!user) {
-    return redirect("/login");
+    if (error) {
+      console.error("Error deleting todo", error);
+      return;
+    }
+
+    setTodosState((prev) => prev.filter((todo) => todo.id !== id));
   }
 
-  const { data: todos, error } = await supabase
-    .from("todos")
-    .select("*")
-    .eq("user_id", user.id);
+  const handleAddTodo = async () => {
+    if (!inputValue) {
+      return;
+    }
 
-  if (error) {
-    console.error("Error fetching todos", error);
-    return;
+    const {data: sessionData, error: sessionError} =await supabase.auth.getSession()
+    
+    if (sessionError || !sessionData) {
+      console.error("Error getting session", sessionError);
+      return;
+    }
+
+    const { session } = sessionData;
+    const { data, error } = await supabase.from("todos")
+      .insert({
+        task: inputValue,
+        user_id: session?.user.id,
+      })
+      .select("*")
+
+    if (error) {
+      console.error("Error inserting todo", error);
+      return;
+    }
+    
+    setTodosState((prev) => [...prev, data[0]]);
+    setInputValue("");
+  }
+
+  const handleInputChage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(e)
+    setInputValue(e.target.value);
+  }
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleAddTodo();
+    }
   }
 
   return (
@@ -48,50 +87,21 @@ export default async function TodoList() {
         <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">Todo List</h1>
         <div className="space-y-4">
         {
-          todos.map((todo: any) => (
-            <div key={todo.id} className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Checkbox id={`todo-${todo.id}`} />
-                <label className="text-gray-700 dark:text-gray-400" htmlFor={`todo-${todo.id}`}>
-                  {todo.task}
-                </label>
-              </div>
-              <Button
-                className="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-500"
-                size="icon"
-                variant="ghost"
-              >
-                <TrashIcon className="h-5 w-5" />
-              </Button>
-            </div>
+          todosState.map((todo: Todo) => (
+            <TodoItem key={todo.id} todo={todo} onDelete={handleDelete} />
           ))
-          }
+        }
         </div>
         <div className="mt-6">
-          <Input className="w-full" placeholder="Add a new todo" />
+          <Input 
+            className="w-full" 
+            placeholder="Add a new todo and press Enter" 
+            value={inputValue} 
+            onChange={handleInputChage} 
+            onKeyDown={onKeyDown}
+          />
         </div>
       </div>
     </div>
-  )
-}
-
-function TrashIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 6h18" />
-      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-    </svg>
   )
 }

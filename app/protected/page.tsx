@@ -15,6 +15,16 @@ export default async function ProtectedPage() {
     return redirect("/login");
   }
 
+  const { data: todos, error } = await supabase
+    .from("todos")
+    .select("*")
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Error fetching todos", error);
+    return <div>Error fetching todos</div>;
+  }
+
   return (
     <div className="flex-1 w-full flex flex-col gap-20 items-center">
       <div className="w-full">
@@ -32,7 +42,7 @@ export default async function ProtectedPage() {
       <div className="animate-in flex-1 flex flex-col gap-20 opacity-0 max-w-4xl px-3">
         <Header />
         <main className="flex-1 flex flex-col gap-6">
-          <TodoList />
+          <TodoList todos={todos}/>
         </main>
       </div>
 
