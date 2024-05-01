@@ -59,7 +59,8 @@ Before you begin, make sure you have the following installed:
 - Click the login button to authenticate with Google using Supabase.
 - Once authenticated, you will be redirected to the home page and show authenticated components
 
-<video src="readme-content/todo-list-supabase-next.mp4" controls title="Title"></video>
+https://github.com/lao/next-supabase-auth-ssr-example/assets/197033/9cc257d9-d854-49f1-b8e9-beec7940ac9a
+
 
 ## Contributing
 
